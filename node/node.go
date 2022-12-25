@@ -10,10 +10,10 @@ import (
 
 type Node struct {
 	id         *dcrypto.PublicKey
-	listenPort string
-	lsn        net.Listener
-	msgch      chan Message
-	quitch     chan struct{}
+	ListenPort string
+	Lsn        net.Listener
+	Msgch      chan Message
+	Quitch     chan struct{}
 }
 
 func NewNode(port string) *Node {
@@ -40,9 +40,9 @@ func NewNode(port string) *Node {
 	// TODO: read port from settings file
 	return &Node{
 		id:         pub,
-		listenPort: port,
-		quitch:     make(chan struct{}),
-		msgch:      make(chan Message, 10),
+		ListenPort: port,
+		Quitch:     make(chan struct{}),
+		Msgch:      make(chan Message, 10),
 	}
 }
 
@@ -57,8 +57,8 @@ func LoadNode() *Node {
 
 	return &Node{
 		id:         pub,
-		listenPort: ":3000",
-		quitch:     make(chan struct{}),
-		msgch:      make(chan Message, 10),
+		ListenPort: ":3000",
+		Quitch:     make(chan struct{}),
+		Msgch:      make(chan Message, 10),
 	}
 }

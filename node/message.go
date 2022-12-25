@@ -1,6 +1,6 @@
 package node
 
 type Message struct {
-	from    string
-	payload []byte
+	From    string
+	Payload []byte
 }
