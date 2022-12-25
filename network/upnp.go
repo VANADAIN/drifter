@@ -74,6 +74,12 @@ func GetIPAndForwardPort(ctx context.Context) error {
 		return err
 	}
 
+	// no router found
+	if client == nil {
+		// same as create port forwarding (no router -> no port forwarding -> no error)
+		return nil
+	}
+
 	externalIP, err := client.GetExternalIPAddress()
 	if err != nil {
 		return err

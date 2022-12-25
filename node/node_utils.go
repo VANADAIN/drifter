@@ -7,6 +7,23 @@ import (
 	"os"
 )
 
+// TODO: refactor to custom path
+func checkKeysSaved() {
+	status, err := exists("./keys_saved")
+	if err != nil {
+		panic("Error reading keys folder")
+	}
+
+	if !status {
+		err := os.Mkdir("./keys_saved", 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		panic("Wrong entrypoint for node! Switch to Load mode.")
+	}
+}
+
 // exists returns whether the given file or directory exists
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
@@ -22,7 +39,7 @@ func exists(path string) (bool, error) {
 
 // save private key to device
 func saveKeyToFile(key *ed25519.PrivateKey) {
-	file, err := os.Create("./keys/key.private")
+	file, err := os.Create("./keys_saved/key.private")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +53,7 @@ func saveKeyToFile(key *ed25519.PrivateKey) {
 }
 
 func readKeyFromFile() ed25519.PrivateKey {
-	f, err := os.Open("./keys/key.private")
+	f, err := os.Open("./keys_saved/key.private")
 	if err != nil {
 		log.Fatal("Private key file not found")
 	}

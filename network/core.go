@@ -47,9 +47,9 @@ func readLoop(s *node.Node, conn net.Conn) {
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
-			if err == io.EOF {
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				fmt.Println("Connection closed")
-				return
+				break
 			} else {
 				fmt.Println("read error: ", err)
 			}

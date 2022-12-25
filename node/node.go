@@ -3,7 +3,6 @@ package node
 import (
 	"log"
 	"net"
-	"os"
 
 	"github.com/VANADAIN/drifter/dcrypto"
 )
@@ -20,20 +19,7 @@ func NewNode(port string) *Node {
 	priv := dcrypto.GeneratePrivateKey()
 	pub := priv.Public()
 
-	status, err := exists("./keys")
-	if err != nil {
-		panic("Error reading keys folder")
-	}
-
-	if !status {
-		err := os.Mkdir("./keys", 0777)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		panic("Wrong entrypoint for node! Switch to Load mode.")
-	}
-
+	checkKeysSaved()
 	saveKeyToFile(&priv.Key)
 	log.Printf("Private key of node saved to key.private")
 
