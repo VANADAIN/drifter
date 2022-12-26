@@ -15,8 +15,8 @@ func Start(s *node.Node) error {
 	}
 
 	defer ln.Close()
-	s.Lsn = ln
 
+	s.Lsn = ln
 	go acceptLoop(s)
 
 	<-s.Quitch
@@ -36,6 +36,8 @@ func acceptLoop(s *node.Node) {
 
 		fmt.Println("new conn: ", conn.RemoteAddr())
 
+		// todo: add new connection, add active conn
+
 		go readLoop(s, conn)
 	}
 }
@@ -49,6 +51,9 @@ func readLoop(s *node.Node, conn net.Conn) {
 		if err != nil {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				fmt.Println("Connection closed")
+
+				// todo: delete active conn
+
 				break
 			} else {
 				fmt.Println("read error: ", err)
@@ -65,4 +70,8 @@ func readLoop(s *node.Node, conn net.Conn) {
 
 		conn.Write([]byte("msg received"))
 	}
+}
+
+func addActiveConnection(s *node.Node, conn net.Conn) {
+	s.ActiveConns = append(s.ActiveConns, conn)
 }

@@ -1,15 +1,15 @@
 package node
 
 import (
-	"crypto/ed25519"
-	"encoding/binary"
+	"encoding/json"
 	"log"
 	"os"
+
+	"github.com/VANADAIN/drifter/dcrypto"
 )
 
-// TODO: refactor to custom path
-func checkKeysSaved() {
-	status, err := exists("./keys_saved")
+func checkKeysSaved(path string) {
+	status, err := exists(path)
 	if err != nil {
 		panic("Error reading keys folder")
 	}
@@ -24,7 +24,6 @@ func checkKeysSaved() {
 	}
 }
 
-// exists returns whether the given file or directory exists
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -38,34 +37,51 @@ func exists(path string) (bool, error) {
 }
 
 // save private key to device
-func saveKeyToFile(key *ed25519.PrivateKey) {
-	file, err := os.Create("./keys_saved/key.private")
+func saveKeyToFile(key *dcrypto.PrivateKey, path string) error {
+	err := os.WriteFile(path, key.Key, 0666)
 	if err != nil {
 		log.Fatal(err)
+		panic("Error saving keys to file")
 	}
 
-	defer file.Close()
-
-	err = binary.Write(file, binary.LittleEndian, key)
-	if err != nil {
-		log.Fatal("Private key saving failed")
-	}
+	return nil
 }
 
-func readKeyFromFile() ed25519.PrivateKey {
-	f, err := os.Open("./keys_saved/key.private")
+// for node loading
+func readKeyFromFile(path string) *dcrypto.PrivateKey {
+	key_raw, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatal("Private key file not found")
+		panic("Error reading keys file")
 	}
 
-	defer f.Close()
-
-	// var key ed25519.PrivateKey
-	key := make([]byte, 64)
-	err = binary.Read(f, binary.LittleEndian, &key)
-	if err != nil {
-		log.Fatal(err)
+	key := &dcrypto.PrivateKey{
+		Key: key_raw,
 	}
 
 	return key
+}
+
+func saveConnectionList(n *Node) {
+	jsonBytes, err := json.MarshalIndent(n.ConnList, "", "    ")
+	if err != nil {
+		log.Fatal("Error converting connection list to json")
+	}
+
+	werr := os.WriteFile("./nodeinfo/coonectionlist.json", jsonBytes, 0666)
+	if err != nil {
+		log.Fatal(werr)
+		panic("Error saving keys to file")
+	}
+}
+
+func loadConnectionList(n *Node) {
+	b, err := os.ReadFile("./nodeinfo/connectionlist.json")
+	if err != nil {
+		panic("Error downloading connection list")
+	}
+
+	jerr := json.Unmarshal(b, &n.ConnList)
+	if jerr != nil {
+		panic("Error unmarshaling connection list")
+	}
 }
