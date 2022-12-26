@@ -12,9 +12,10 @@ type Node struct {
 	id          *dcrypto.PublicKey
 	ListenPort  string
 	Lsn         net.Listener
-	ActiveConns []net.Conn
-	ConnList    map[string]string // strings of pubk -> net.Addr.String()
-	Aliases     map[string]string // name (alias) -> pubk
+	ConnLimiter int
+	ActiveConns map[string]net.Conn // net.Addr -> connection
+	ConnList    map[string]string   // strings of pubk -> net.Addr.String()
+	Aliases     map[string]string   // name (alias) -> pubk string
 	Msgch       chan Message
 	Quitch      chan struct{}
 }

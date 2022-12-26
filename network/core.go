@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 
 	"github.com/VANADAIN/drifter/node"
@@ -30,13 +31,21 @@ func acceptLoop(s *node.Node) {
 	for {
 		conn, err := s.Lsn.Accept()
 		if err != nil {
-			fmt.Println("accept error: ", err)
+			fmt.Println("Accept connection error: ", err)
 			continue
 		}
 
-		fmt.Println("new conn: ", conn.RemoteAddr())
+		fmt.Println("New conn: ", conn.RemoteAddr())
 
-		// todo: add new connection, add active conn
+		if len(s.ActiveConns) < s.ConnLimiter {
+			addActiveConnection(s, conn)
+		} else {
+			conn.Write([]byte("All connection slots are busy"))
+			conn.Close()
+			log.Println("Max number of connections reached")
+		}
+
+		addConnectionToList(s, conn)
 
 		go readLoop(s, conn)
 	}
@@ -73,5 +82,20 @@ func readLoop(s *node.Node, conn net.Conn) {
 }
 
 func addActiveConnection(s *node.Node, conn net.Conn) {
-	s.ActiveConns = append(s.ActiveConns, conn)
+	address := conn.RemoteAddr().String()
+
+	s.ActiveConns[address] = conn
+}
+
+func addConnectionToList(s *node.Node, conn net.Conn) {
+	// search by address (value)
+	for _, v := range s.ConnList {
+		if v == conn.RemoteAddr().String() {
+			return
+		} else {
+			// connection not in list ->
+			// get public key of remote node
+			// s.ConnList[] = conn.RemoteAddr().String()
+		}
+	}
 }
