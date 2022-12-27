@@ -12,7 +12,7 @@ type Settings struct {
 }
 
 func Read() *Settings {
-	yamlf, err := os.ReadFile("./setting/settings_default.yml")
+	yamlf, err := os.ReadFile("./settings/settings_default.yml")
 	if err != nil {
 		panic("Cannot read settings file")
 	}

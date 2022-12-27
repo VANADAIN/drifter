@@ -24,5 +24,5 @@ func main() {
 		}
 	}()
 
-	log.Fatal(network.Start(server))
+	log.Fatal(server.Start())
 }
