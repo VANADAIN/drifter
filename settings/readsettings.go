@@ -7,8 +7,9 @@ import (
 )
 
 type Settings struct {
-	Keys_path          string `yaml:"keys_path"`
-	Active_connections int    `yaml:"active_connections"`
+	Keys_path           string `yaml:"keys_path"`
+	Active_connections  int    `yaml:"active_connections"`
+	Default_public_node string `yaml:"default_public_node"`
 }
 
 func Read() *Settings {

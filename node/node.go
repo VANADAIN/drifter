@@ -37,5 +37,4 @@ type Node struct {
 // 		id: pub,
 // 	}
 
-// 	// run create connections
 // }

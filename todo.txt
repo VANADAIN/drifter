@@ -1,11 +1,13 @@
 common 
-    project structure
-    tests
+    tests !!!
+    create F2F layer 
+    add message encryption in f2f
 
 network 
-    initial connection 
-    on start connections
-    validate connection (is connection from node ?)
+    create handlers in mediators 
+    connection timings
+    add mutexes 
+    channeling and parralelling connections 
 
 additional 
     user docs
