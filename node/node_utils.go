@@ -62,7 +62,7 @@ func readKeyFromFile(path string) *dcrypto.PrivateKey {
 }
 
 func saveConnectionList(n *Node) {
-	jsonBytes, err := json.MarshalIndent(n.ConnList, "", "    ")
+	jsonBytes, err := json.MarshalIndent(n.nmng.ConnList, "", "    ")
 	if err != nil {
 		log.Fatal("Error converting connection list to json")
 	}
@@ -80,7 +80,7 @@ func loadConnectionList(n *Node) {
 		panic("Error downloading connection list")
 	}
 
-	jerr := json.Unmarshal(b, &n.ConnList)
+	jerr := json.Unmarshal(b, &n.nmng.ConnList)
 	if jerr != nil {
 		panic("Error unmarshaling connection list")
 	}

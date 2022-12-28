@@ -1,0 +1,13 @@
+common 
+    project structure
+    tests
+
+network 
+    initial connection 
+    on start connections
+    validate connection (is connection from node ?)
+
+additional 
+    user docs
+    dev docs 
+    graphical structure docs
