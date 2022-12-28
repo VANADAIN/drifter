@@ -4,7 +4,9 @@ common
     add message encryption in f2f
 
 network 
+    rewrite all conn write to type message
     create handlers in mediators 
+    create message caches for each node
     connection timings
     add mutexes 
     channeling and parralelling connections 

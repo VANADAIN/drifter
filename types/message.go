@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"time"
 )
 
 // this is the file for peer 2 peer straight conversation
@@ -19,6 +20,7 @@ type MessageHeader struct {
 
 type MessageBody struct {
 	From    string
+	Time    time.Time
 	Payload []byte
 }
 

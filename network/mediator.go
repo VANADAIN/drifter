@@ -3,15 +3,16 @@ package network
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 
 	"github.com/VANADAIN/drifter/types"
-	"github.com/ethereum/go-ethereum/log"
 )
 
 type Mediator struct {
-	nm *NetworkManager // to access data of parent nm
-	c  net.Conn
+	nm    *NetworkManager // to access data of parent nm
+	c     net.Conn
+	cache *ConnCache
 }
 
 func (m *Mediator) RunReadLoop() {
@@ -38,7 +39,6 @@ func (m *Mediator) RunReadLoop() {
 		msg := types.Message{
 			Body: msgb,
 		}
-		msg.HashIt()
 
 		// fmt.Println(msg)
 
@@ -52,9 +52,35 @@ func (m *Mediator) RunReadLoop() {
 
 func (m *Mediator) SendNodeInfo() {
 	nodeinfo := m.nm.info.Bytes()
-	_, err := m.c.Write(nodeinfo)
+	msg := &types.Message{
+		Header: types.MessageHeader{
+			Type: "Node Info",
+		},
+		Body: types.MessageBody{
+			From:    m.c.LocalAddr().String(),
+			Payload: nodeinfo,
+		},
+	}
+
+	_, err := m.c.Write(msg.Bytes())
 	if err != nil {
-		log.Errorf("Unable to send node info to: %s", m.c.RemoteAddr().String())
+		log.Printf("Unable to send node info to: %s", m.c.RemoteAddr().String())
+	}
+}
+
+func (m *Mediator) RegisterMe() {
+	msg := &types.Message{
+		Header: types.MessageHeader{
+			Type: "Register Me",
+		},
+		Body: types.MessageBody{
+			From: m.c.LocalAddr().String(),
+		},
+	}
+
+	_, err := m.c.Write(msg.Bytes())
+	if err != nil {
+		log.Printf("Unable to send node info to: %s", m.c.RemoteAddr().String())
 	}
 }
 
@@ -74,8 +100,19 @@ func (m *Mediator) RequestPublicKey() {
 
 // ============ default functions ================
 
-func (m *Mediator) SendMessage() {
-	// create message
-	// ...
-	// m.c.Write(msg)
+func (m *Mediator) SendMessage(message string) {
+	msg := &types.Message{
+		Header: types.MessageHeader{
+			Type: "Default",
+		},
+		Body: types.MessageBody{
+			From:    m.c.LocalAddr().String(),
+			Payload: []byte(message),
+		},
+	}
+
+	_, err := m.c.Write(msg.Bytes())
+	if err != nil {
+		log.Printf("Unable to send node info to: %s", m.c.RemoteAddr().String())
+	}
 }

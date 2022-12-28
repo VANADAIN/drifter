@@ -15,10 +15,10 @@ type NetworkManager struct {
 	ConnLimiter int
 	ListenPort  string
 	Lsn         net.Listener
-	ConnList    map[string]string   // strings of pubk -> net.Addr(ip)
-	ActiveConns map[string]net.Conn // net.Addr(ip) -> connection
-	Mediators   map[string]Mediator // net.Addr(ip) -> message manager
-	Aliases     map[string]string   // name (alias) -> pubk string
+	ConnList    map[string]string    // strings of pubk -> net.Addr(ip)
+	ActiveConns map[string]net.Conn  // net.Addr(ip) -> connection
+	Mediators   map[string]*Mediator // net.Addr(ip) -> message manager
+	Aliases     map[string]string    // name (alias) -> pubk string
 	Msgch       chan types.Message
 	Quitch      chan struct{}
 }
@@ -58,7 +58,14 @@ func (s *NetworkManager) acceptLoop() {
 		fmt.Println("New conn: ", conn.RemoteAddr())
 
 		if len(s.ActiveConns) < s.ConnLimiter {
-			s.validateIncomingConnection(conn)
+			conn.Write([]byte("This peer has slots, running mediator for you... Send node info or you will be disconnected."))
+			s.RunMediator(conn)
+
+			// remote node will send nodeinfo after 2 sec
+			// and mediator will add it to list
+			// waiting 5 sec
+			time.Sleep(5 * time.Second)
+			s.ValidateConnection(conn)
 		} else {
 			conn.Write([]byte("All connection slots of this peer are busy. Closing connection."))
 			conn.Close()
@@ -71,7 +78,7 @@ func (s *NetworkManager) acceptLoop() {
 func (s *NetworkManager) CreateConnections() {
 
 	if len(s.ConnList) == 0 {
-		panic("No connections in the list!")
+		panic("No addresses in the list! Connection list is empty.")
 	}
 
 	// TODO: run this in goroutines with channel (faster connection)
@@ -94,25 +101,22 @@ func (s *NetworkManager) CreateConnections() {
 			nm: s,
 			c:  conn,
 		}
-		s.Mediators[conn.RemoteAddr().String()] = *new_mediator
-
-		// sleep 2 secons before sending info (remote node is preparing it's mediator)
-		time.Sleep(2 * time.Second)
+		s.Mediators[conn.RemoteAddr().String()] = new_mediator
 
 		new_mediator.RunReadLoop()
+
+		// sleep 2 seconds before sending info (remote node is preparing it's mediator)
+		time.Sleep(2 * time.Second)
 		new_mediator.SendNodeInfo()
 	}
 }
 
-// this method is for connecting to "public" (always active) node
 func (s *NetworkManager) initialConnection(address string) net.Conn {
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		panic("Remote peer from provided address if offline")
 	}
 
-	s.AddActiveConnection(conn)
-	s.AddConnectionToList(conn)
 	// after that connection remote peer will ask for node info
 	// that info must be available after first init already
 
@@ -122,7 +126,7 @@ func (s *NetworkManager) initialConnection(address string) net.Conn {
 		c:  conn,
 	}
 
-	s.Mediators[conn.RemoteAddr().String()] = *new_mediator
+	s.Mediators[conn.RemoteAddr().String()] = new_mediator
 
 	time.Sleep(2 * time.Second)
 	new_mediator.RunReadLoop()
@@ -131,17 +135,13 @@ func (s *NetworkManager) initialConnection(address string) net.Conn {
 	return conn
 }
 
-func (s *NetworkManager) validateIncomingConnection(conn net.Conn) {
-	// create mediator and send some info
+func (s *NetworkManager) RunMediator(conn net.Conn) {
 	new_mediator := &Mediator{
 		nm: s,
 		c:  conn,
 	}
 
-	s.Mediators[conn.RemoteAddr().String()] = *new_mediator
-
-	// check source
-	// run adding connection from mediator !!!
+	s.Mediators[conn.RemoteAddr().String()] = new_mediator
 	new_mediator.RunReadLoop()
 }
 
@@ -170,6 +170,19 @@ func (s *NetworkManager) AddConnectionToList(conn net.Conn, pub *dcrypto.PublicK
 
 func (s *NetworkManager) DeleteActiveConnection(conn net.Conn) {
 	address := conn.RemoteAddr().String()
-
 	delete(s.ActiveConns, address)
+}
+
+func (s *NetworkManager) ValidateConnection(conn net.Conn) {
+	// check if connection was added to active connections
+	_, ok := s.ActiveConns[conn.RemoteAddr().String()]
+	// if this connection exists (mediator added it)
+	if ok {
+		return
+	} else {
+		conn.Write([]byte("Your peer did not send node info. Closing connection..."))
+		// delete mediator
+		delete(s.Mediators, conn.RemoteAddr().String())
+		conn.Close()
+	}
 }
