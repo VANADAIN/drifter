@@ -1,6 +1,8 @@
 package server
 
-import "golang.org/x/net/websocket"
+import (
+	"golang.org/x/net/websocket"
+)
 
 func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
 	// max of connection active
@@ -13,12 +15,12 @@ func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
 }
 
 func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
-	if s.activeAddr[ws.RemoteAddr().String()] {
-		return true
+	if !s.activeAddr[ws.RemoteAddr().String()] {
+		return false
 	}
 
 	ws.Write([]byte("Your node is already connected. Closing connection..."))
-	return false
+	return true
 }
 
 func saveToKnown(s *Server, addr string) {

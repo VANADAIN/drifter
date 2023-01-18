@@ -8,8 +8,8 @@ import (
 )
 
 type Message struct {
-	Header MsgHeader
-	Body   MsgBody
+	Header MsgHeader `json: "header"`
+	Body   MsgBody   `json: "body"`
 }
 
 type MsgBody struct {
@@ -20,8 +20,8 @@ type MsgBody struct {
 }
 
 type MsgHeader struct {
-	Hash      [32]byte
-	CreatedAt int64
+	Hash      [32]byte `json: "hash"`
+	CreatedAt int64    `json: "createdAt"`
 }
 
 func SimpleTextMessage(from string, payload string) *Message {

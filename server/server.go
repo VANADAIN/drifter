@@ -76,7 +76,7 @@ func (s *Server) RunConnectionLoop() {
 func (s *Server) readLoop(ws *websocket.Conn) {
 	buf := make([]byte, 1024)
 	for {
-		_, err := ws.Read(buf)
+		n, err := ws.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				// remote connection closed
@@ -86,13 +86,17 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 			continue
 		}
 
-		msg := types.Message{}
-		websocket.JSON.Receive(ws, &msg)
+		ms := types.Message{}
+		msgraw := buf[:n]
+		json.Unmarshal(msgraw, &ms)
+
+		// msg := types.Message{}
+		// websocket.JSON.Receive(ws, &msg)
 
 		//routes.Route(&msg)
 
 		fmt.Println("msg from req")
-		fmt.Println(msg.Body.Payload)
+		fmt.Println(ms.Body.Payload)
 
 		respp := types.Message{
 			Header: types.MsgHeader{
