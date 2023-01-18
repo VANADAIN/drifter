@@ -7,13 +7,16 @@ import (
 func Route(msg *types.Message) {
 	mtype := msg.Body.Type
 
-	if mtype == "text" {
+	switch mtype {
+
+	case "text":
 		textHandler(msg)
-	}
-	if mtype == "barter" {
+
+	case "barter":
 		barterHandler(msg)
-	}
-	if mtype == "tunneljob" {
+
+	case "tunneljob":
 		tjHandler(msg)
+
 	}
 }

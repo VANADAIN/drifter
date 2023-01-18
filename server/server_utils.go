@@ -20,3 +20,26 @@ func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
 	ws.Write([]byte("Your node is already connected. Closing connection..."))
 	return false
 }
+
+func saveToKnown(s *Server, addr string) {
+	saved := addrSaved(s, addr)
+	if !saved {
+		// not in list
+		saveAddr(s, addr)
+	} else {
+		return
+	}
+}
+
+func saveAddr(s *Server, addr string) {
+	s.knownConns = append(s.knownConns, addr)
+}
+
+func addrSaved(s *Server, addr string) bool {
+	for _, val := range s.knownConns {
+		if val == addr {
+			return true
+		}
+	}
+	return false
+}

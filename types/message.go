@@ -21,7 +21,23 @@ type MsgBody struct {
 
 type MsgHeader struct {
 	Hash      [32]byte
-	CreatedAt time.Time
+	CreatedAt int64
+}
+
+func SimpleTextMessage(from string, payload string) *Message {
+	msg := &Message{
+		Header: MsgHeader{
+			CreatedAt: time.Now().Unix(),
+		},
+		Body: MsgBody{
+			Type:    "text",
+			From:    from,
+			Origin:  from,
+			Payload: payload,
+		},
+	}
+
+	return msg
 }
 
 func (m *Message) HashIt() {

@@ -1,27 +1,36 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
-	"github.com/VANADAIN/drifter/routes"
+	"github.com/VANADAIN/drifter/dcrypto"
 	"github.com/VANADAIN/drifter/types"
 	"golang.org/x/net/websocket"
 )
 
 type Server struct {
+	Name        string
+	ID          dcrypto.PublicKey
 	connCounter int
 	knownConns  []string
 	activeConns map[*websocket.Conn]bool
 	activeAddr  map[string]bool
-	connch      chan *websocket.Conn
+	connch      chan *ConnAction
+}
+
+type ConnAction struct {
+	action string
+	conn   *websocket.Conn
 }
 
 func NewServer() *Server {
 	server := &Server{
 		activeConns: make(map[*websocket.Conn]bool),
 		activeAddr:  make(map[string]bool),
-		connch:      make(chan *websocket.Conn, 10),
+		connch:      make(chan *ConnAction, 10),
 	}
 
 	go server.RunConnectionLoop()
@@ -38,16 +47,29 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	// true + false
 	if status && !statusEx {
 		ws.Write([]byte("Connecting..."))
-		s.connch <- ws
+
+		// add to active actions
+		ac := &ConnAction{
+			action: "active",
+			conn:   ws,
+		}
+
+		s.connch <- ac
 		s.readLoop(ws)
+
 	} else {
 		ws.Close()
 	}
 }
 
 func (s *Server) RunConnectionLoop() {
-	for conn := range s.connch {
-		s.addConnection(conn)
+	for conna := range s.connch {
+		switch conna.action {
+		case "active":
+			s.addConnection(conna.conn)
+		case "known":
+			go saveToKnown(s, conna.conn.RemoteAddr().String())
+		}
 	}
 }
 
@@ -66,21 +88,23 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 
 		msg := types.Message{}
 		websocket.JSON.Receive(ws, &msg)
-		routes.Route(&msg)
 
+		//routes.Route(&msg)
+
+		fmt.Println("msg from req")
 		fmt.Println(msg.Body.Payload)
 
-		ws.Write([]byte(fmt.Sprintf("msg received %d", s.connCounter)))
-	}
-}
-
-func (s *Server) broadcast(msg *types.Message) {
-	for ws := range s.activeConns {
-		go func(ws *websocket.Conn) {
-			if _, err := ws.Write(msg.Bytes()); err != nil {
-				fmt.Println("Broadcast error: ", err)
-			}
-		}(ws)
+		respp := types.Message{
+			Header: types.MsgHeader{
+				CreatedAt: time.Now().Unix(),
+			},
+			Body: types.MsgBody{
+				Type:    "text",
+				Payload: "Msg received",
+			},
+		}
+		resp, _ := json.Marshal(respp)
+		ws.Write(resp)
 	}
 }
 
@@ -88,4 +112,14 @@ func (s *Server) addConnection(conn *websocket.Conn) {
 	s.activeConns[conn] = true
 	s.activeAddr[conn.RemoteAddr().String()] = true
 	s.connCounter += 1
+
+	// if connection was added to active after all checks
+	// try to add to known
+	// send to ch with action known
+	ac := &ConnAction{
+		action: "known",
+		conn:   conn,
+	}
+
+	s.connch <- ac
 }
