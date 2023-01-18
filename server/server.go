@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/VANADAIN/drifter/routes"
 	"github.com/VANADAIN/drifter/types"
 	"golang.org/x/net/websocket"
 )
 
 type Server struct {
 	connCounter int
+	knownConns  []string
 	activeConns map[*websocket.Conn]bool
 	activeAddr  map[string]bool
 	connch      chan *websocket.Conn
@@ -29,11 +31,9 @@ func NewServer() *Server {
 
 func (s *Server) HandleConn(ws *websocket.Conn) {
 	fmt.Println("New incoming conn from: ", ws.RemoteAddr())
-	status := s.checkConnectionPossible(ws)
-	statusEx := s.checkConnectionExists(ws)
+	status := checkConnectionPossible(ws, s)
+	statusEx := checkConnectionExists(ws, s)
 
-	fmt.Println(status)
-	fmt.Println(statusEx)
 	// if less than 9 conns and conn dont exists
 	// true + false
 	if status && !statusEx {
@@ -45,23 +45,10 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	}
 }
 
-func (s *Server) checkConnectionPossible(ws *websocket.Conn) bool {
-	// max of connection active
-	if len(s.activeConns) < 10 {
-		return true
+func (s *Server) RunConnectionLoop() {
+	for conn := range s.connch {
+		s.addConnection(conn)
 	}
-
-	ws.Write([]byte("This node reached maximum number of connections. Closing connection..."))
-	return false
-}
-
-func (s *Server) checkConnectionExists(ws *websocket.Conn) bool {
-	if s.activeAddr[ws.RemoteAddr().String()] {
-		return true
-	}
-
-	ws.Write([]byte("Your node is already connected. Closing connection..."))
-	return false
 }
 
 func (s *Server) readLoop(ws *websocket.Conn) {
@@ -77,27 +64,23 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 			continue
 		}
 
-		data := types.Message{}
-		websocket.JSON.Receive(ws, &data)
-		fmt.Println(data.Payload)
+		msg := types.Message{}
+		websocket.JSON.Receive(ws, &msg)
+		routes.Route(&msg)
+
+		fmt.Println(msg.Body.Payload)
 
 		ws.Write([]byte(fmt.Sprintf("msg received %d", s.connCounter)))
 	}
 }
 
-func (s *Server) broadcast(b []byte) {
+func (s *Server) broadcast(msg *types.Message) {
 	for ws := range s.activeConns {
 		go func(ws *websocket.Conn) {
-			if _, err := ws.Write(b); err != nil {
-				fmt.Println("write error: ", err)
+			if _, err := ws.Write(msg.Bytes()); err != nil {
+				fmt.Println("Broadcast error: ", err)
 			}
 		}(ws)
-	}
-}
-
-func (s *Server) RunConnectionLoop() {
-	for conn := range s.connch {
-		s.addConnection(conn)
 	}
 }
 
