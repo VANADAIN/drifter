@@ -1,45 +1,28 @@
 package types
 
-import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/gob"
-)
-
-// this is the file for peer 2 peer straight conversation
 type Message struct {
-	Header MessageHeader
-	Body   MessageBody
+	Type    string `json: "type"`
+	Payload string `json: "payload"`
 }
 
-type MessageHeader struct {
-	Type     string
-	From     string
-	DataHash [32]byte
-}
+// func (m *Message) HashIt() {
+// 	b := m.payload.Bytes()
+// 	h := sha256.Sum256(b)
+// 	m.DataHash = h
+// }
 
-type MessageBody struct {
-	Payload []byte
-}
+// func (m *Message) Bytes() []byte {
+// 	buf := &bytes.Buffer{}
+// 	enc := gob.NewEncoder(buf)
+// 	enc.Encode(m)
 
-func (m *Message) HashIt() {
-	b := m.Body.Bytes()
-	h := sha256.Sum256(b)
-	m.Header.DataHash = h
-}
+// 	return buf.Bytes()
+// }
 
-func (m *Message) Bytes() []byte {
-	buf := &bytes.Buffer{}
-	enc := gob.NewEncoder(buf)
-	enc.Encode(m)
+// func (body *MessageBody) Bytes() []byte {
+// 	buf := &bytes.Buffer{}
+// 	enc := gob.NewEncoder(buf)
+// 	enc.Encode(body)
 
-	return buf.Bytes()
-}
-
-func (body *MessageBody) Bytes() []byte {
-	buf := &bytes.Buffer{}
-	enc := gob.NewEncoder(buf)
-	enc.Encode(body)
-
-	return buf.Bytes()
-}
+// 	return buf.Bytes()
+// }
