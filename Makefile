@@ -5,4 +5,4 @@ run: build
 	./bin/drifter
 
 test:
-	go test -v ./...
+	go test -v ./... -timeout 10000ms

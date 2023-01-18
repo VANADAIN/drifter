@@ -1,19 +1,21 @@
 package main
 
+import (
+	"net/http"
+
+	"github.com/VANADAIN/drifter/server"
+	"golang.org/x/net/websocket"
+)
+
 func main() {
+
 	// ctx := context.Background()
 	// err := network.GetIPAndForwardPort(ctx)
 	// if err == nil {
 	// 	fmt.Println("port forwarding created!")
 	// }
 
-	// server := node.NewNode(":3000")
-
-	// go func() {
-	// 	for msg := range server.Msgch {
-	// 		fmt.Printf("receiver msg from (%s): %s\n", msg.From, string(msg.Payload))
-	// 	}
-	// }()
-
-	// log.Fatal(server.Start())
+	server := server.NewServer()
+	http.Handle("/ws", websocket.Handler(server.HandleConn))
+	http.ListenAndServe(":3000", nil)
 }
