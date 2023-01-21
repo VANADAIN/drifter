@@ -1,5 +1,7 @@
 # Quickstart
 
+[![ci](https://github.com/VANADAIN/drifter/actions/workflows/ci.yml/badge.svg)](https://github.com/VANADAIN/drifter/actions/workflows/ci.yml)
+
 # Features
 
 ### Network

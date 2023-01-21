@@ -24,3 +24,6 @@ go.work
 keys_saved
 keys
 bin
+
+# Editors
+.idea
