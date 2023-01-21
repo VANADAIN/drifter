@@ -13,7 +13,7 @@ import (
 )
 
 func TestConns(t *testing.T) {
-	server := NewServer()
+	server := NewServer("A")
 
 	handler := websocket.Handler(server.HandleConn)
 	serv := httptest.NewServer(http.Handler(handler))

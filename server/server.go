@@ -15,6 +15,7 @@ type Server struct {
 	Name        string
 	ID          dcrypto.PublicKey
 	connCounter int
+	aliases     map[string]string
 	knownConns  []string
 	activeConns map[*websocket.Conn]bool
 	activeAddr  map[string]bool
@@ -26,8 +27,9 @@ type ConnAction struct {
 	conn   *websocket.Conn
 }
 
-func NewServer() *Server {
+func NewServer(name string) *Server {
 	server := &Server{
+		Name:        name,
 		activeConns: make(map[*websocket.Conn]bool),
 		activeAddr:  make(map[string]bool),
 		connch:      make(chan *ConnAction, 10),

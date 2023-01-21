@@ -15,7 +15,7 @@ func main() {
 	// 	fmt.Println("port forwarding created!")
 	// }
 
-	server := server.NewServer()
+	server := server.NewServer("A")
 	http.Handle("/ws", websocket.Handler(server.HandleConn))
 
 	// this method is for always-run nodes
