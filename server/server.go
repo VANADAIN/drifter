@@ -90,10 +90,8 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		msgraw := buf[:n]
 		json.Unmarshal(msgraw, &ms)
 
-		// msg := types.Message{}
-		// websocket.JSON.Receive(ws, &msg)
-
-		//routes.Route(&msg)
+		// decide what to do with this message ...
+		// routes.Route(&ms)
 
 		fmt.Println("msg from req")
 		fmt.Println(ms.Body.Payload)
