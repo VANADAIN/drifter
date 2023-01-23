@@ -2,7 +2,8 @@ package server
 
 import (
 	"fmt"
-	"net/http"
+	"log"
+	"net"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -13,28 +14,39 @@ import (
 )
 
 func TestConns(t *testing.T) {
-	server := NewServer("A")
+	node_serv := NewServer("A")
+	handler := websocket.Handler(node_serv.HandleConn)
+	server := httptest.NewUnstartedServer(handler)
 
-	handler := websocket.Handler(server.HandleConn)
-	serv := httptest.NewServer(http.Handler(handler))
+	l, err := net.Listen("tcp", "127.0.0.1:3000")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Println(serv.URL)
+	server.Listener.Close()
+	server.Listener = l
 
-	address := serv.URL
-	wsURL := "ws" + strings.TrimPrefix(serv.URL, "http") + "/ws"
+	server.Start()
+	defer server.Close()
 
-	_, err := websocket.Dial(wsURL, "", address)
+	fmt.Println("Server url: ", server.URL)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
+	origin := "http://127.0.0.1:50000"
+	conn, err := websocket.Dial(wsURL, "", origin)
+
 	if err != nil {
 		panic(err)
 	}
 
-	//fmt.Printf("%+v\n", server)
-	// fmt.Printf("%+v\n", conn)
+	fmt.Println("Local address of client:", conn.LocalAddr().String())
 
 	time.Sleep(2 * time.Second)
 
-	assert.Equal(t, server.connCounter, 1)
-	assert.Equal(t, server.activeAddr[serv.URL], true)
-	assert.Equal(t, server.knownConns[0], serv.URL)
-	// assert.Equal(t, server.activeConns[conn], true) ???
+	fmt.Printf("\nServer: %+v\n\n", server)
+	fmt.Printf("\nConnection: %+v\n\n", conn)
+
+	assert.Equal(t, node_serv.knownConns[0], origin)
+	assert.Equal(t, node_serv.activeConns[0].RemoteAddr().String(), origin)
+	assert.Equal(t, node_serv.ConnCounter, 1)
 }

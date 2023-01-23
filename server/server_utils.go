@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/VANADAIN/drifter/types"
 	"golang.org/x/net/websocket"
 )
 
@@ -10,23 +11,29 @@ func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
 		return true
 	}
 
-	ws.Write([]byte("This node reached maximum number of connections. Closing connection..."))
+	msg := types.NewMessage(s.IP, "This node reached maximum number of connections. Closing connection...")
+	ws.Write(msg)
+
 	return false
 }
 
 func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
-	if !s.activeAddr[ws.RemoteAddr().String()] {
-		return false
+	for _, conn := range s.activeConns {
+		if ws == conn {
+			payload := "Your node is already connected. Closing connection..."
+			msg := types.NewMessage(s.IP, payload)
+			ws.Write(msg)
+
+			return true
+		}
 	}
 
-	ws.Write([]byte("Your node is already connected. Closing connection..."))
-	return true
+	return false
 }
 
 func saveToKnown(s *Server, addr string) {
 	saved := addrSaved(s, addr)
 	if !saved {
-		// not in list
 		saveAddr(s, addr)
 	} else {
 		return
@@ -34,6 +41,7 @@ func saveToKnown(s *Server, addr string) {
 }
 
 func saveAddr(s *Server, addr string) {
+	// concurrent safe ???
 	s.knownConns = append(s.knownConns, addr)
 }
 

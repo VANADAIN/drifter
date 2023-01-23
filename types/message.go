@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/json"
 	"time"
 )
 
@@ -24,7 +25,7 @@ type MsgHeader struct {
 	CreatedAt int64    `json: "createdAt"`
 }
 
-func SimpleTextMessage(from string, payload string) *Message {
+func NewMessage(from string, payload string) []byte {
 	msg := &Message{
 		Header: MsgHeader{
 			CreatedAt: time.Now().Unix(),
@@ -37,7 +38,9 @@ func SimpleTextMessage(from string, payload string) *Message {
 		},
 	}
 
-	return msg
+	msgj, _ := json.Marshal(msg)
+
+	return msgj
 }
 
 func (m *Message) HashIt() {

@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
+	"net"
+	"strings"
 
 	"github.com/VANADAIN/drifter/dcrypto"
 	"github.com/VANADAIN/drifter/types"
@@ -14,24 +15,20 @@ import (
 type Server struct {
 	Name        string
 	ID          dcrypto.PublicKey
-	connCounter int
-	aliases     map[string]string
+	IP          string
+	ConnCounter int
+	// aliases     map[string]string // for local names
+	friendList  []string
 	knownConns  []string
-	activeConns map[*websocket.Conn]bool
-	activeAddr  map[string]bool
+	activeConns []*websocket.Conn
 	connch      chan *ConnAction
-}
-
-type ConnAction struct {
-	action string
-	conn   *websocket.Conn
 }
 
 func NewServer(name string) *Server {
 	server := &Server{
 		Name:        name,
-		activeConns: make(map[*websocket.Conn]bool),
-		activeAddr:  make(map[string]bool),
+		ConnCounter: 0,
+		activeConns: make([]*websocket.Conn, 0),
 		connch:      make(chan *ConnAction, 10),
 	}
 
@@ -40,6 +37,32 @@ func NewServer(name string) *Server {
 	return server
 }
 
+// == DIAL FUNC ==
+
+func (s *Server) ConnectOne(address string) {
+	// connect to default endpoint
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		fmt.Println("Error in reading ip address")
+	}
+
+	ws_url := "ws" + strings.TrimPrefix(host, "http") + "/ws"
+	ws, err := websocket.Dial(ws_url, "", host+":3000")
+	if err != nil {
+		fmt.Printf("Error conencting to: %s", host)
+		return
+	}
+
+	s.readLoop(ws)
+}
+
+func (s *Server) CreateRandomConnections() {
+	for _, address := range s.knownConns {
+		s.ConnectOne(address)
+	}
+}
+
+// == RECEIVE FUNCS ==
 func (s *Server) HandleConn(ws *websocket.Conn) {
 	fmt.Println("New incoming conn from: ", ws.RemoteAddr())
 	status := checkConnectionPossible(ws, s)
@@ -48,13 +71,10 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	// if less than 9 conns and conn dont exists
 	// true + false
 	if status && !statusEx {
-		ws.Write([]byte("Connecting..."))
+		ws.Write(types.NewMessage(s.IP, "Connecting..."))
 
 		// add to active actions
-		ac := &ConnAction{
-			action: "active",
-			conn:   ws,
-		}
+		ac := NewConnection("active", ws)
 
 		s.connch <- ac
 		s.readLoop(ws)
@@ -65,6 +85,7 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 }
 
 func (s *Server) RunConnectionLoop() {
+	fmt.Println("Connection loop started ...")
 	for conna := range s.connch {
 		switch conna.action {
 		case "active":
@@ -82,6 +103,7 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		if err != nil {
 			if err == io.EOF {
 				// remote connection closed
+				ws.Close()
 				break
 			}
 			fmt.Println("Read error: ", err)
@@ -95,35 +117,21 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		// decide what to do with this message ...
 		// routes.Route(&ms)
 
-		fmt.Println("msg from req")
 		fmt.Println(ms.Body.Payload)
 
-		respp := types.Message{
-			Header: types.MsgHeader{
-				CreatedAt: time.Now().Unix(),
-			},
-			Body: types.MsgBody{
-				Type:    "text",
-				Payload: "Msg received",
-			},
-		}
-		resp, _ := json.Marshal(respp)
-		ws.Write(resp)
+		response := types.NewMessage(s.IP, "Message received")
+		ws.Write(response)
 	}
 }
 
-func (s *Server) addConnection(conn *websocket.Conn) {
-	s.activeConns[conn] = true
-	s.activeAddr[conn.RemoteAddr().String()] = true
-	s.connCounter += 1
+func (s *Server) addConnection(ws *websocket.Conn) {
+	s.activeConns = append(s.activeConns, ws)
+	s.ConnCounter += 1
 
 	// if connection was added to active after all checks
 	// try to add to known
 	// send to ch with action known
-	ac := &ConnAction{
-		action: "known",
-		conn:   conn,
-	}
+	ac := NewConnection("known", ws)
 
 	s.connch <- ac
 }
