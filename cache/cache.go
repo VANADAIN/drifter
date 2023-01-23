@@ -1,4 +1,5 @@
 package cache
 
-type Cache struct {
+type CacheManager struct {
+	// arrays of cache types
 }
