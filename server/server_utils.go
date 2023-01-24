@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/VANADAIN/drifter/types"
 	"golang.org/x/net/websocket"
 )
@@ -19,7 +21,8 @@ func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
 
 func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
 	for _, conn := range s.activeConns {
-		if ws == conn {
+		if ws.RemoteAddr().String() == conn.RemoteAddr().String() {
+			fmt.Println("Connection already exists")
 			payload := "Your node is already connected. Closing connection..."
 			msg := types.NewMessage(s.IP, payload)
 			ws.Write(msg)

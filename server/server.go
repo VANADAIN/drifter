@@ -18,7 +18,7 @@ type Server struct {
 	IP          string
 	ConnCounter int
 	// aliases     map[string]string // for local names
-	friendList  []string
+	// friendList  []string
 	knownConns  []string
 	activeConns []*websocket.Conn
 	connch      chan *ConnAction
