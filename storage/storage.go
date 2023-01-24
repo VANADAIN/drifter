@@ -1,44 +1,23 @@
 package storage
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/VANADAIN/drifter/dcrypto"
+	"github.com/VANADAIN/drifter/storage/connection_storage"
+	"github.com/VANADAIN/drifter/storage/keys_storage"
 )
 
 type StorageManager struct {
-	keysPath       string
-	connectionPath string
+	ks *keys_storage.KeysStorage
+	cs *connection_storage.ConnectionStorage
 }
 
-func (sm *StorageManager) SaveKeys(pk *dcrypto.PrivateKey, pubk *dcrypto.PublicKey) {
-	err := os.WriteFile("data/pk", pk.Bytes(), 0666)
-	if err != nil {
-		panic("Error saving crypto keys")
+func NewStorageManager(keyPath string, connectionPath string) *StorageManager {
+	keystore := keys_storage.NewKeysStorage(keyPath)
+	connectionstore := connection_storage.NewConnectionStorage(connectionPath)
+
+	sm := &StorageManager{
+		ks: keystore,
+		cs: connectionstore,
 	}
 
-	err2 := os.WriteFile("data/pubk", pubk.Bytes(), 0666)
-	if err2 != nil {
-		panic("Error saving crypto keys")
-	}
-}
-
-func (sm *StorageManager) LoadKeys() (*dcrypto.PrivateKey, *dcrypto.PublicKey) {
-	// check if file exists
-	pkey_b, err := os.ReadFile("data/pk")
-	if err != nil {
-		if os.IsNotExist(err) {
-			panic("Error loading crypto keys.")
-		} else {
-			panic(fmt.Sprintf("Error reading crypto keys %s:", err))
-		}
-	}
-
-	pk := &dcrypto.PrivateKey{
-		Key: pkey_b,
-	}
-	pub := pk.Public()
-
-	return pk, pub
+	return sm
 }
