@@ -3,6 +3,7 @@ package keys_storage
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/VANADAIN/drifter/dcrypto"
 )
@@ -20,14 +21,16 @@ func NewKeysStorage(path string) *KeysStorage {
 }
 
 func (ks *KeysStorage) SaveKeys(pk *dcrypto.PrivateKey, pubk *dcrypto.PublicKey) {
+	ks.CreatePath()
 	err := os.WriteFile(ks.KeysPath+"pk", pk.Bytes(), 0666)
+	fmt.Println(err)
 	if err != nil {
-		panic("Error saving crypto keys")
+		panic("Error saving private key")
 	}
 
 	err2 := os.WriteFile(ks.KeysPath+"pubk", pubk.Bytes(), 0666)
 	if err2 != nil {
-		panic("Error saving crypto keys")
+		panic("Error saving public key")
 	}
 }
 
@@ -48,4 +51,13 @@ func (ks *KeysStorage) LoadKeys() (*dcrypto.PrivateKey, *dcrypto.PublicKey) {
 	pub := pk.Public()
 
 	return pk, pub
+}
+
+func (ks *KeysStorage) CreatePath() {
+	// create path
+	newpath := filepath.Join(".", ks.KeysPath)
+	e := os.MkdirAll(newpath, os.ModePerm)
+	if e != nil {
+		panic(e)
+	}
 }

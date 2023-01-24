@@ -20,10 +20,11 @@
 # Go workspace file
 go.work
 
-# my
+# project
 keys_saved
 keys
 bin
+data
 
 # Editors
 .idea
