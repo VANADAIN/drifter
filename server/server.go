@@ -20,7 +20,7 @@ type Server struct {
 	// aliases     map[string]string // for local names
 	// friendList  []string
 	KnownConns  []string
-	activeConns []*websocket.Conn
+	activeConns []*websocket.Conn // player
 	connch      chan *ConnAction
 }
 
@@ -63,7 +63,7 @@ func (s *Server) CreateRandomConnections() {
 }
 
 // == RECEIVE FUNCS ==
-func (s *Server) HandleConn(ws *websocket.Conn) {
+func (s *Server) HandleConn(ws *websocket.Conn) { // handleNewPlayer
 	fmt.Println("New incoming conn from: ", ws.RemoteAddr())
 	status := checkConnectionPossible(ws, s)
 	statusEx := checkConnectionExists(ws, s)
@@ -72,11 +72,8 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	// true + false
 	if status && !statusEx {
 		ws.Write(types.NewMessage(s.IP, []byte("Connecting...")))
-
-		// add to active actions
-		ac := NewConnection("active", ws)
-
-		s.connch <- ac
+		ac := NewConnectionAction("active", ws)
+		s.ReceiveConnch(ac)
 		s.readLoop(ws)
 
 	} else {
@@ -84,15 +81,27 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	}
 }
 
-func (s *Server) RunConnectionLoop() {
+func (s *Server) ReceiveConnch(conna *ConnAction) {
+	s.connch <- conna
+}
+
+func (s *Server) RunConnectionLoop() { // loop
 	fmt.Println("Connection loop started ...")
 	for conna := range s.connch {
-		switch conna.action {
-		case "active":
-			s.addConnection(conna.conn)
-		case "known":
-			go saveToKnown(s, conna.conn.RemoteAddr().String())
-		}
+		s.HandleConnectionAction(conna)
+	}
+}
+
+func (s *Server) HandleConnectionAction(conna *ConnAction) { //handle message
+	switch conna.action {
+	case "active":
+		s.addConnectionToServer(conna.conn)
+	case "known":
+		saveToKnown(s, conna.conn.RemoteAddr().String())
+	case "delete":
+		deleteConnection(s, conna.conn)
+	default:
+		panic("Invalid message")
 	}
 }
 
@@ -104,6 +113,10 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 			if err == io.EOF {
 				// remote connection closed
 				ws.Close()
+
+				ac := NewConnectionAction("delete", ws)
+				s.ReceiveConnch(ac)
+
 				break
 			}
 			fmt.Println("Read error: ", err)
@@ -124,14 +137,11 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 	}
 }
 
-func (s *Server) addConnection(ws *websocket.Conn) {
+func (s *Server) addConnectionToServer(ws *websocket.Conn) { // add player
 	s.activeConns = append(s.activeConns, ws)
 	s.ConnCounter += 1
 
-	// if connection was added to active after all checks
 	// try to add to known
-	// send to ch with action known
-	ac := NewConnection("known", ws)
-
-	s.connch <- ac
+	ac := NewConnectionAction("known", ws)
+	s.ReceiveConnch(ac)
 }

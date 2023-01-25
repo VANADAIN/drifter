@@ -7,7 +7,7 @@ type ConnAction struct {
 	conn   *websocket.Conn
 }
 
-func NewConnection(action_type string, conn *websocket.Conn) *ConnAction {
+func NewConnectionAction(action_type string, conn *websocket.Conn) *ConnAction {
 	new_conn := &ConnAction{
 		action: action_type,
 		conn:   conn,

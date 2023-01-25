@@ -56,3 +56,11 @@ func addrSaved(s *Server, addr string) bool {
 	}
 	return false
 }
+
+func deleteConnection(s *Server, ws *websocket.Conn) {
+	for index, conn := range s.activeConns {
+		if conn.RemoteAddr().String() == ws.RemoteAddr().String() {
+			s.activeConns = append(s.activeConns[:index], s.activeConns[index+1:]...)
+		}
+	}
+}
