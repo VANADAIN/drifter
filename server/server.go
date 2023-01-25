@@ -18,9 +18,9 @@ type Server struct {
 	IP          string
 	ConnCounter int
 	// aliases     map[string]string // for local names
-	// friendList  []string
+	// friendList  []string or ws ???
 	KnownConns  []string
-	activeConns []*websocket.Conn // player
+	activeConns []*websocket.Conn
 	connch      chan *ConnAction
 }
 
@@ -63,7 +63,7 @@ func (s *Server) CreateRandomConnections() {
 }
 
 // == RECEIVE FUNCS ==
-func (s *Server) HandleConn(ws *websocket.Conn) { // handleNewPlayer
+func (s *Server) HandleConn(ws *websocket.Conn) {
 	fmt.Println("New incoming conn from: ", ws.RemoteAddr())
 	status := checkConnectionPossible(ws, s)
 	statusEx := checkConnectionExists(ws, s)
@@ -85,14 +85,14 @@ func (s *Server) ReceiveConnch(conna *ConnAction) {
 	s.connch <- conna
 }
 
-func (s *Server) RunConnectionLoop() { // loop
+func (s *Server) RunConnectionLoop() {
 	fmt.Println("Connection loop started ...")
 	for conna := range s.connch {
 		s.HandleConnectionAction(conna)
 	}
 }
 
-func (s *Server) HandleConnectionAction(conna *ConnAction) { //handle message
+func (s *Server) HandleConnectionAction(conna *ConnAction) {
 	switch conna.action {
 	case "active":
 		s.addConnectionToServer(conna.conn)
@@ -113,7 +113,6 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 			if err == io.EOF {
 				// remote connection closed
 				ws.Close()
-
 				ac := NewConnectionAction("delete", ws)
 				s.ReceiveConnch(ac)
 
@@ -129,7 +128,6 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 
 		// decide what to do with this message ...
 		// routes.Route(&ms)
-
 		fmt.Println(ms.Body.Payload)
 
 		response := types.NewMessage(s.IP, []byte("Message received"))
@@ -137,7 +135,7 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 	}
 }
 
-func (s *Server) addConnectionToServer(ws *websocket.Conn) { // add player
+func (s *Server) addConnectionToServer(ws *websocket.Conn) {
 	s.activeConns = append(s.activeConns, ws)
 	s.ConnCounter += 1
 

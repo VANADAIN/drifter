@@ -23,7 +23,7 @@ func NewKeysStorage(path string) *KeysStorage {
 func (ks *KeysStorage) SaveKeys(pk *dcrypto.PrivateKey, pubk *dcrypto.PublicKey) {
 	ks.CreatePath()
 	err := os.WriteFile(ks.KeysPath+"pk", pk.Bytes(), 0666)
-	fmt.Println(err)
+	// fmt.Println(err)
 	if err != nil {
 		panic("Error saving private key")
 	}
