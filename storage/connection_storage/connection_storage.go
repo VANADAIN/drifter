@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 type ConnectionStorage struct {
@@ -19,13 +20,20 @@ func NewConnectionStorage(path string) *ConnectionStorage {
 }
 
 func (cs *ConnectionStorage) SaveConnections(conns []string) error {
-	cs.DeleteFile()
-	f, err := os.Create(cs.FilePath)
-	if err != nil {
-		panic("Error trying to create known connections file")
+	if _, err := os.Stat(cs.FilePath); err == nil {
+		// mixing is done in memory, so we can delete file if file exists
+		cs.DeleteFile()
 	}
 
+	cs.CreatePath()
+
+	f, err := os.Create(cs.FilePath + "connections.txt")
+	if err != nil {
+		fmt.Println(err)
+		panic("Error trying to create known connections file")
+	}
 	defer f.Close()
+
 	if err != nil {
 		panic("Error trying to save known connections file")
 	}
@@ -39,7 +47,7 @@ func (cs *ConnectionStorage) SaveConnections(conns []string) error {
 
 func (cs *ConnectionStorage) LoadConnections() []string {
 	res := make([]string, 0)
-	file, err := os.Open(cs.FilePath)
+	file, err := os.Open(cs.FilePath + "connections.txt")
 	if err != nil {
 		panic("Error reading connections file")
 	}
@@ -57,8 +65,17 @@ func (cs *ConnectionStorage) LoadConnections() []string {
 }
 
 func (cs *ConnectionStorage) DeleteFile() {
-	err := os.Remove(cs.FilePath)
+	err := os.Remove(cs.FilePath + "connections.txt")
 	if err != nil {
 		panic("Error trying to delete known connections file")
+	}
+}
+
+func (cs *ConnectionStorage) CreatePath() {
+	// create path
+	newpath := filepath.Join(".", cs.FilePath)
+	e := os.MkdirAll(newpath, os.ModePerm)
+	if e != nil {
+		panic(e)
 	}
 }
