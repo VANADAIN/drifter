@@ -13,7 +13,7 @@ func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
 		return true
 	}
 
-	msg := types.NewMessage(s.IP, "This node reached maximum number of connections. Closing connection...")
+	msg := types.NewMessage(s.IP, []byte("This node reached maximum number of connections. Closing connection..."))
 	ws.Write(msg)
 
 	return false
@@ -24,7 +24,7 @@ func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
 		if ws.RemoteAddr().String() == conn.RemoteAddr().String() {
 			fmt.Println("Connection already exists")
 			payload := "Your node is already connected. Closing connection..."
-			msg := types.NewMessage(s.IP, payload)
+			msg := types.NewMessage(s.IP, []byte(payload))
 			ws.Write(msg)
 
 			return true
@@ -45,11 +45,11 @@ func saveToKnown(s *Server, addr string) {
 
 func saveAddr(s *Server, addr string) {
 	// concurrent safe ???
-	s.knownConns = append(s.knownConns, addr)
+	s.KnownConns = append(s.KnownConns, addr)
 }
 
 func addrSaved(s *Server, addr string) bool {
-	for _, val := range s.knownConns {
+	for _, val := range s.KnownConns {
 		if val == addr {
 			return true
 		}

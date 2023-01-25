@@ -1,10 +1,15 @@
 package routes
 
 import (
+	"github.com/VANADAIN/drifter/server"
 	"github.com/VANADAIN/drifter/types"
 )
 
-func Route(msg *types.Message) {
+// type Router struct {
+
+// }
+
+func Route(s *server.Server, msg *types.Message) {
 	mtype := msg.Body.Type
 
 	switch mtype {
@@ -13,10 +18,9 @@ func Route(msg *types.Message) {
 		textHandler(msg)
 
 	case "barter":
-		barterHandler(msg)
+		barterHandler(s, msg)
 
 	case "tunneljob":
 		tjHandler(msg)
-
 	}
 }

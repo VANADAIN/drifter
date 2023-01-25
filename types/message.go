@@ -17,7 +17,7 @@ type MsgBody struct {
 	Type    string `json: "type"`
 	From    string `json: "from"`
 	Origin  string `json: "origin"`
-	Payload string `json: "payload"`
+	Payload []byte `json: "payload"`
 }
 
 type MsgHeader struct {
@@ -25,7 +25,7 @@ type MsgHeader struct {
 	CreatedAt int64    `json: "createdAt"`
 }
 
-func NewMessage(from string, payload string) []byte {
+func NewMessage(from string, payload []byte) []byte {
 	msg := &Message{
 		Header: MsgHeader{
 			CreatedAt: time.Now().Unix(),

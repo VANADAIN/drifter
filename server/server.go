@@ -19,7 +19,7 @@ type Server struct {
 	ConnCounter int
 	// aliases     map[string]string // for local names
 	// friendList  []string
-	knownConns  []string
+	KnownConns  []string
 	activeConns []*websocket.Conn
 	connch      chan *ConnAction
 }
@@ -57,7 +57,7 @@ func (s *Server) ConnectOne(address string) {
 }
 
 func (s *Server) CreateRandomConnections() {
-	for _, address := range s.knownConns {
+	for _, address := range s.KnownConns {
 		s.ConnectOne(address)
 	}
 }
@@ -71,7 +71,7 @@ func (s *Server) HandleConn(ws *websocket.Conn) {
 	// if less than 9 conns and conn dont exists
 	// true + false
 	if status && !statusEx {
-		ws.Write(types.NewMessage(s.IP, "Connecting..."))
+		ws.Write(types.NewMessage(s.IP, []byte("Connecting...")))
 
 		// add to active actions
 		ac := NewConnection("active", ws)
@@ -119,7 +119,7 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 
 		fmt.Println(ms.Body.Payload)
 
-		response := types.NewMessage(s.IP, "Message received")
+		response := types.NewMessage(s.IP, []byte("Message received"))
 		ws.Write(response)
 	}
 }

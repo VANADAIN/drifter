@@ -46,7 +46,7 @@ func TestConns(t *testing.T) {
 	fmt.Printf("\nServer: %+v\n\n", server)
 	fmt.Printf("\nConnection: %+v\n\n", conn)
 
-	assert.Equal(t, node_serv.knownConns[0], origin)
+	assert.Equal(t, node_serv.KnownConns[0], origin)
 	assert.Equal(t, node_serv.activeConns[0].RemoteAddr().String(), origin)
 	assert.Equal(t, node_serv.ConnCounter, 1)
 }
