@@ -15,6 +15,7 @@ type Message struct {
 
 type MsgBody struct {
 	Type    string `json: "type"`
+	Subtype string `json: "subtype"`
 	From    string `json: "from"`
 	Origin  string `json: "origin"`
 	Payload []byte `json: "payload"`
