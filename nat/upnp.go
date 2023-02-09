@@ -70,7 +70,7 @@ func PickRouterClient(ctx context.Context) (RouterClient, error) {
 	}
 }
 
-func getLocalIP() net.IP {
+func GetLocalIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
@@ -94,7 +94,7 @@ func GetIPAndForwardPort(ctx context.Context) error {
 	}
 	fmt.Println("Our external IP address is: ", externalIP)
 
-	internalIP := getLocalIP()
+	internalIP := GetLocalIP()
 
 	return client.AddPortMapping(
 		"",

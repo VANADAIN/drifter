@@ -16,7 +16,7 @@ func main() {
 	// }
 
 	server := server.NewServer("A")
-	http.Handle("/ws", websocket.Handler(server.HandleConn))
+	http.Handle("/ws", websocket.Handler(server.CH.HandleConn))
 
 	// this method is for always-run nodes
 	// http.Handle("/wspublic", websocket.Handler(server.RunPublic))

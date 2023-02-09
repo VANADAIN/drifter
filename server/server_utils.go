@@ -7,24 +7,24 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func checkConnectionPossible(ws *websocket.Conn, s *Server) bool {
+func checkConnectionPossible(ws *websocket.Conn, ch *ConnectionHandler) bool {
 	// max of connection active
-	if len(s.activeConns) < 10 {
+	if len(ch.activeConns) < 10 {
 		return true
 	}
 
-	msg := types.NewMessage(s.IP, []byte("This node reached maximum number of connections. Closing connection..."))
+	msg := types.NewMessage(ch.s.IP, []byte("This node reached maximum number of connections. Closing connection..."))
 	ws.Write(msg)
 
 	return false
 }
 
-func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
-	for _, conn := range s.activeConns {
+func checkConnectionExists(ws *websocket.Conn, ch *ConnectionHandler) bool {
+	for _, conn := range ch.activeConns {
 		if ws.RemoteAddr().String() == conn.RemoteAddr().String() {
 			fmt.Println("Connection already exists")
 			payload := "Your node is already connected. Closing connection..."
-			msg := types.NewMessage(s.IP, []byte(payload))
+			msg := types.NewMessage(ch.s.IP, []byte(payload))
 			ws.Write(msg)
 
 			return true
@@ -34,7 +34,7 @@ func checkConnectionExists(ws *websocket.Conn, s *Server) bool {
 	return false
 }
 
-func saveToKnown(s *Server, addr string) {
+func saveToKnown(s *ConnectionHandler, addr string) {
 	saved := addrSaved(s, addr)
 	if !saved {
 		saveAddr(s, addr)
@@ -43,12 +43,12 @@ func saveToKnown(s *Server, addr string) {
 	}
 }
 
-func saveAddr(s *Server, addr string) {
+func saveAddr(s *ConnectionHandler, addr string) {
 	// concurrent safe ???
 	s.KnownConns = append(s.KnownConns, addr)
 }
 
-func addrSaved(s *Server, addr string) bool {
+func addrSaved(s *ConnectionHandler, addr string) bool {
 	for _, val := range s.KnownConns {
 		if val == addr {
 			return true
@@ -57,7 +57,7 @@ func addrSaved(s *Server, addr string) bool {
 	return false
 }
 
-func deleteConnection(s *Server, ws *websocket.Conn) {
+func deleteConnection(s *ConnectionHandler, ws *websocket.Conn) {
 	for index, conn := range s.activeConns {
 		if conn.RemoteAddr().String() == ws.RemoteAddr().String() {
 			s.activeConns = append(s.activeConns[:index], s.activeConns[index+1:]...)

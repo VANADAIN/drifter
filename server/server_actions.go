@@ -14,7 +14,7 @@ func Send(s *Server, msg *types.Message) {
 }
 
 func Broadcast(s *Server, msg *types.Message) {
-	for _, ws := range s.activeConns {
+	for _, ws := range s.CH.activeConns {
 		go func(ws *websocket.Conn) {
 			msgj, err := json.Marshal(msg)
 			if err != nil {

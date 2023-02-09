@@ -15,9 +15,9 @@ func barterHandler(s *server.Server, msg *types.Message) {
 
 	// compare connections known by server and bartered connections
 	for _, barter_conn := range barter_conns {
-		if !inlist(barter_conn, s.KnownConns) {
+		if !inlist(barter_conn, s.CH.KnownConns) {
 			// concurrent safe ???
-			s.KnownConns = append(s.KnownConns, barter_conn)
+			s.CH.KnownConns = append(s.CH.KnownConns, barter_conn)
 		}
 	}
 }

@@ -16,7 +16,7 @@ import (
 
 func CreateServer() (*httptest.Server, *Server) {
 	node_serv := NewServer("A")
-	handler := websocket.Handler(node_serv.HandleConn)
+	handler := websocket.Handler(node_serv.CH.HandleConn)
 	server := httptest.NewUnstartedServer(handler)
 
 	l, err := net.Listen("tcp", "127.0.0.1:3000")
@@ -53,9 +53,9 @@ func TestConnections(t *testing.T) {
 	fmt.Printf("\nServer: %+v\n\n", server)
 	fmt.Printf("\nConnection: %+v\n\n", conn)
 
-	assert.Equal(t, node_serv.KnownConns[0], origin)
-	assert.Equal(t, node_serv.activeConns[0].RemoteAddr().String(), origin)
-	assert.Equal(t, node_serv.ConnCounter, 1)
+	assert.Equal(t, node_serv.CH.KnownConns[0], origin)
+	assert.Equal(t, node_serv.CH.activeConns[0].RemoteAddr().String(), origin)
+	assert.Equal(t, node_serv.CH.ConnCounter, 1)
 }
 
 func TestConnectionDenial(t *testing.T) {
@@ -72,7 +72,7 @@ func TestConnectionDenial(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	conn, err := websocket.Dial(wsURL, "", origin)
+	conn, _ := websocket.Dial(wsURL, "", origin)
 
 	buf := make([]byte, 1024)
 	var check error

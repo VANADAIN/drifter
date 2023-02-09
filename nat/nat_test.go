@@ -6,6 +6,6 @@ import (
 )
 
 func TestLocalIP(t *testing.T) {
-	ip := getLocalIP()
+	ip := GetLocalIP()
 	fmt.Println(ip.String())
 }
